@@ -63,7 +63,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         return Response(
             {
                 "data": UserSerializer(user).data,
-                "token": str(refresh.access_token),
+                "access": str(refresh.access_token),
                 "refresh": str(refresh),
                 "message": "تایید موفقیت انجام شد",
             },

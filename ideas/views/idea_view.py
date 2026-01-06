@@ -3,8 +3,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from ..serializers import IdeasSerializer
+from ..serializers import IdeasSerializer, IdeasListSerializer
 from ..models import Ideas
+from django.db.models import Count
 
 
 class IdeasViewSet(viewsets.ModelViewSet):
@@ -21,7 +22,7 @@ class IdeasViewSet(viewsets.ModelViewSet):
         serializer = IdeasSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"message": "اطلاعات وارد شده معتبر نمی باشد"},
+                {"message": "اطلاعات وارد شده معتبر نمی باشد", "success": False},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -39,11 +40,15 @@ class IdeasViewSet(viewsets.ModelViewSet):
                 comments_visibility=comments_visibility,
             )
         except ValueError as e:
-            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": str(e), "success": False},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         return Response(
             {
                 "data": IdeasSerializer(idea).data,
+                "success": True,
                 "message": "ایده مورد نظر با موفقیت ذخیره شد",
             },
             status=status.HTTP_201_CREATED,
@@ -104,6 +109,28 @@ class IdeasViewSet(viewsets.ModelViewSet):
             {
                 "data": IdeasSerializer(idea).data,
                 "message": "ایده با موفقیت حذف شد",
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["post"],
+        url_path="list",
+        permission_classes=[IsAuthenticated],
+    )
+    def list_ideas(self, request):
+        qs = Ideas.objects.select_related("author").annotate(
+            like_count=Count("votes", distinct=True),
+            comment_count=Count("comments", distinct=True),
+        )
+        ideas = qs.filter(author=request.user)
+        serializer = IdeasListSerializer(ideas, many=True)
+        return Response(
+            {
+                "list": serializer.data,
+                "success": True,
+                "message": "ایده های مورد نظر با موفقیت دریافت شد",
             },
             status=status.HTTP_200_OK,
         )

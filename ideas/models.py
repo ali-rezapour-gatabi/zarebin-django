@@ -2,13 +2,9 @@ from django.db import models
 
 
 class Ideas(models.Model):
-    VISIBILITY_COMMENT = [
-        ("PUBLIC", "Public"),
-        ("PRIVATE", "Private"),
-    ]
 
     author = models.ForeignKey("users.User", on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=500)
     description = models.TextField()
     domain = models.CharField(max_length=64, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -17,12 +13,7 @@ class Ideas(models.Model):
     is_deleted = models.BooleanField(default=False)
     is_verified = models.BooleanField(default=False)
     verified_at = models.DateTimeField(null=True)
-    comments_visibility = models.CharField(
-        max_length=10,
-        choices=VISIBILITY_COMMENT,
-        default="PUBLIC",
-        db_index=True,
-    )
+    comments_visibility = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "ideas"
